@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.25/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.25/"></script>
+    <style>
+        html,
+        body {
+          height: 100%;
+          width: 100%;
+          margin: 0;
+          padding: 0;
+        }
+  
+        #viewDiv {
+          height: 50%;
+          width: 100%;
+        }
+  
+        .container {
+          height: 50%;
+          width: 100%;
+        }
+        #toolbarDiv {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        cursor: default;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+      }
+
+      .esri-widget--button.active,
+      .esri-widget--button.active:hover,
+      .esri-widget--button.active:focus {
+        cursor: default;
+        background-color: #999696;
+      }
+      .esri-widget--button.active path,
+      .esri-widget--button.active:hover path,
+      .esri-widget--button.active:focus path {
+        fill: #E4E4E4;
+      }
+      </style>
+    <script>
+        require([
+            "esri/config",
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/layers/FeatureLayer",
+            "esri/layers/VectorTileLayer",
+            "esri/layers/GeoJSONLayer",
+            "esri/Basemap",
+            "esri/widgets/FeatureTable",
+            "esri/core/reactiveUtils",
+            "esri/widgets/Legend",
+            "esri/widgets/Expand",
+            "esri/widgets/Measurement"
+        ],(esriConfig, Map, MapView, FeatureLayer, VectorTileLayer, GeoJSONLayer, Basemap, FeatureTable,reactiveUtils, Legend, Expand, Measurement)=> {
+            esriConfig.apiKey = "AAPK6b94cdfb127e45c4af821058afcc069ddl02lEjYxQnDnuK17AFzZ0sxdJaBH1Yijkj5cdvfDKKHbTJyL_jSJddv2hkcmVQP";
+
+            let schoolRenderer = {
+                type: "simple",
+                symbol: {
+                    type: "simple-marker",
+                    size: 10,
+                    color: "blue",
+                    outline: {  // autocasts as new SimpleLineSymbol()
+                        width: 0.5,
+                        color: "white"
+                    }
+                }
+
+            }
+
+            const popupTrailheads = {
+                "title": "Public School",
+                "content": "{school_name}"
+            }
+
+            let myvec = new FeatureLayer({
+               url: "https://services7.arcgis.com/7aoRHz96LqUUqbow/arcgis/rest/services/publicschools/FeatureServer/0",
+               popupTemplate: popupTrailheads,
+               renderer: schoolRenderer
+            });
+        
+            const map = new Map({
+                basemap: "arcgis-navigation", //basemap service
+                layers: []
+            });
+        
+            map.add(myvec);
+        
+            const view = new MapView({
+                container: "viewDiv",
+                map: map,
+                center: [36.817223, -1.286389],
+                zoom: 13,
+                constraints: {
+                  snapToZoom: false
+                },
+                popup: {
+                    dockEnabled: true,
+                    dockOptions: {
+                        buttonEnabled: false,
+                        breakpoint: false
+                    }
+                }
+                
+            });
+
+            const featuretable = new FeatureTable({
+                view: view, // Required for feature highlight to work
+                layer: myvec,
+                multiSortEnabled: true,
+                visibleElements: {
+                    // Autocast to VisibleElements
+                    menuItems: {
+                        clearSelection: true,
+                        refreshData: true,
+                        toggleColumns: true,
+                        selectedRecordsShowAllToggle: true,
+                        selectedRecordsShowSelectedToggle: true,
+                        zoomToSelection: true
+                    }
+                },
+                tableTemplate: {
+                    columnTemplates: [{
+                        type: "field",
+                        fieldName: "id",
+                        label: "ID",
+                        direction: "asc"
+                    },{
+                        type: "field",
+                        fieldName: "school_name",
+                        label: "SCHOOL NAME",
+                    }, ]
+                },
+                
+                container: document.getElementById("tableDiv")
+            });
+
+            
+
+           
+
+            let selectedFeature, id;
+
+            reactiveUtils.watch(
+                () => view.popup.viewModel.active,
+                () => {
+                    selectedFeature = view.popup.selectedFeature;
+                    featuretable.highlightIds.removeAll();
+                    featuretable.highlightIds.add(view.popup.selectedFeature.attributes.OBJECTID);
+                    id = selectedFeature.getObjectId();
+
+                }
+            );
+
+            const legend = new Expand({
+                content: new Legend({
+                    view: view,
+                    style: "card",
+                    label: "Public Schools",
+                    layerInfos: [{
+
+                        layer: myvec,
+
+                        title: "public schools"
+
+                    }]
+                }),
+                view: view,
+                expanded: false
+            });
+
+            view.ui.add(legend, "bottom-left");
+
+            const measurement = new Measurement({
+                view: view
+            });
+
+            const distanceButton = document.getElementById('distance');
+            const areaButton = document.getElementById('area');
+            const clearButton = document.getElementById('clear');
+
+            clearButton.addEventListener("click", () => {
+                clearMeasurements();
+            });
+
+            areaButton.addEventListener("click", () => {
+                areaMeasurement();
+            });
+
+            distanceButton.addEventListener("click", () => {
+                distanceMeasurement();
+            });
+
+            function clearMeasurements() {
+                distanceButton.classList.remove("active");
+                areaButton.classList.remove("active");
+                measurement.clear();
+            }
+
+            function areaMeasurement() {
+                measurement.activeTool = "area";
+                distanceButton.classList.remove("active");
+                areaButton.classList.add("active");
+            }
+
+            function distanceMeasurement() {
+                measurement.activeTool = "distance";
+                distanceButton.classList.add("active"); 
+                areaButton.classList.remove("active");
+            }
+
+            measurement.on('click',(e) => {
+                console.log(e);
+            });
+            
+
+            view.ui.add(measurement, "bottom-right");
+                
+        });
+    </script>
+
+</head>
+<body>
+    
+    <div id="viewDiv"></div>
+    <div class="container">
+        <div id="tableDiv"></div>
+    </div>
+
+    <div id="toolbarDiv" class="esri-component esri-widget">
+        <button id="distance" class="esri-widget--button esri-interactive esri-icon-measure-line" title="Distance Measurement Tool">
+        </button>
+        <button id="area" class="esri-widget--button esri-interactive esri-icon-measure-area" title="Area Measurement Tool">
+        </button>
+        <button id="clear" class="esri-widget--button esri-interactive esri-icon-trash" title="Clear Measurements">
+        </button>
+    </div>
+    
+</body>
+</html>

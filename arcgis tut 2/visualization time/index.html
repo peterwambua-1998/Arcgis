@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Street condition complaints</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.25/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.25/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+        require([
+        "esri/config",
+        "esri/WebMap",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/Legend",
+        "esri/widgets/Expand",
+        "esri/smartMapping/labels/clusters",
+        "esri/smartMapping/popup/clusters",
+        "esri/core/promiseUtils"
+      ], function (esriConfig,WebMap, MapView, FeatureLayer, Legend, Expand,clusterLabelCreator,clusterPopupCreator,promiseUtils
+      ) {
+
+        esriConfig.apiKey = "AAPK6b94cdfb127e45c4af821058afcc069ddl02lEjYxQnDnuK17AFzZ0sxdJaBH1Yijkj5cdvfDKKHbTJyL_jSJddv2hkcmVQP";
+
+        const colors = [ "#2799ff", "#423a3a", "#ff3333" ];
+
+        const renderer = {
+            type: "simple",
+            label: "Observed hurricane location",
+            symbol: {
+                type: "simple-marker",
+                size: 6,
+                outline: {
+                width: 0.5,
+                color: [255,255,255,0.5]
+                }
+            },
+            visualVariables: [{
+                type: "color",
+                valueExpression: "DateDiff($feature['closed_time'], $feature['due_time'], 'days')",
+                valueExpressionTitle: "Days it took to close incident",
+                stops: [
+                    {value: -21, color: colors[0], label: "21 weeks early"},
+                    {value: 0, color: colors[1], label: "On time"},
+                    {value: 21, color: colors[2], label: "21 weeks late"}
+                ]
+            }]
+        }
+
+
+        const layer = new FeatureLayer({
+            portalItem: {
+                id: "f624a9f4afa947fe98acd0ed38fbe436"
+            },
+            title: "Street condition complaints",
+            renderer: renderer,
+            definitionExpression: "Complaint_Type = 'Street Condition'"
+        });
+
+        const map = new WebMap({
+          portalItem: {
+            id: "75a3ce8990674a5ebd5b9ab66bdab893"
+          },
+          layers: [ layer ]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          scale: 144447,
+          center: [ -73.863, 40.7 ],
+          constraints: {
+            snapToZoom:false
+          }
+        });
+
+        var expand = new Expand({
+            content: new Legend({
+                view: view
+            }),
+            view: view,
+            expanded: true
+        });
+
+        view.ui.add(expand, "top-right");
+
+        view.when().then(generateClusterConfig)
+                    .then((featureReduction) => {
+                        layer.featureReduction = featureReduction;
+                    });
+
+        function generateClusterConfig() {
+          // generates default popupTemplate
+          const popupPromise = clusterPopupCreator
+            .getTemplates({
+              layer: layer
+            })
+            .then(function (popupTemplateResponse) {
+              return popupTemplateResponse.primaryTemplate.value;
+            });
+
+          // generates default labelingInfo
+            const labelPromise = clusterLabelCreator
+            .getLabelSchemes({
+              layer: layer,
+              view: view
+            })
+            .then(function (labelSchemes) {
+              return labelSchemes.primaryScheme;
+            });
+
+          return promiseUtils
+            .eachAlways([ popupPromise, labelPromise ])
+            .then(function (result) {
+              const popupTemplate = result[0].value;
+
+              const primaryLabelScheme = result[1].value;
+              const labelingInfo = primaryLabelScheme.labelingInfo;
+              // Ensures the clusters are large enough to fit labels
+              const clusterMinSize = primaryLabelScheme.clusterMinSize;
+
+              return {
+                type: "cluster",
+                popupTemplate: popupTemplate,
+                labelingInfo: labelingInfo,
+                clusterMinSize: clusterMinSize,
+                clusterRadius: 50
+              };
+            })
+            .catch(function (error) {
+              console.error(error);
+            });
+        }
+
+      });
+    </script>
+</head>
+<body>
+    <div id="viewDiv"></div>
+</body>
+</html>

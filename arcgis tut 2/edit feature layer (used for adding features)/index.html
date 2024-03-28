@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.25/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.25/"></script>
+    <style>
+        html,
+        body {
+          height: 100%;
+          width: 100%;
+          margin: 0;
+          padding: 0;
+        }
+  
+        #viewDiv {
+          height: 100%;
+          width: 100%;
+        }
+  
+        .container {
+          height: 50%;
+          width: 100%;
+        }
+        #toolbarDiv {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        cursor: default;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+      }
+
+      .esri-widget--button.active,
+      .esri-widget--button.active:hover,
+      .esri-widget--button.active:focus {
+        cursor: default;
+        background-color: #999696;
+      }
+      .esri-widget--button.active path,
+      .esri-widget--button.active:hover path,
+      .esri-widget--button.active:focus path {
+        fill: #E4E4E4;
+      }
+      </style>
+   <script src="./script.js" ></script>
+</head>
+<body>
+    <div id="viewDiv"></div>
+
+
+    
+</body>
+</html>

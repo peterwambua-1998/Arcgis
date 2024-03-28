@@ -1,0 +1,19 @@
+{
+  "name": "feature-layer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --mode development"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1"
+  },
+  "dependencies": {
+    "@esri/arcgis-rest-feature-service": "^4.0.4",
+    "@esri/arcgis-rest-request": "^4.0.2"
+  }
+}

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basemap Layers</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            left: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            color: #323232;
+        }
+    </style>
+
+    <!-- Load Leaflet from CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.2/dist/leaflet.css" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.2/dist/leaflet.js" crossorigin=""></script>
+
+    <!-- Load Esri Leaflet from CDN -->
+    <script src="https://unpkg.com/esri-leaflet@^3.0.9/dist/esri-leaflet.js"></script>
+    <script src="https://unpkg.com/esri-leaflet-vector@4.0.0/dist/esri-leaflet-vector.js"></script>
+    <style>
+        .leaflet-popup-content {
+            padding: 2px !important;
+            margin: 0 !important;
+        }
+        #details {
+            height: 70vh;
+            padding: 5px;
+            background: rgb(160, 9, 9);
+            border-radius: 10px;
+        }
+
+        .leaflet-control-attribution {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <div id="details">
+        
+    </div>
+
+    <script>
+        
+
+        const map = L.map("map", {
+            minZoom: 2,
+        
+        });
+
+        map.setView([-1.295180, 36.842510], 3);
+
+        const apiKey = 'AAPK6b94cdfb127e45c4af821058afcc069ddl02lEjYxQnDnuK17AFzZ0sxdJaBH1Yijkj5cdvfDKKHbTJyL_jSJddv2hkcmVQP';
+
+        
+        const basemapEnum = '2234d7b00ba64e5bbaab96850a2b7b8d';
+        /*
+
+        L.esri.Vector.vectorBasemapLayer(basemapEnum, {
+            apikey: apikey
+        }).addTo(map);
+        */
+
+        L.esri.Vector.vectorBasemapLayer(basemapEnum, {
+            apiKey: apiKey
+        }).addTo(map);
+
+        var control = L.control({
+            position: 'topright'
+        });
+
+        console.log(control.getPosition());
+        
+        console.log(control);
+
+        var trailheads = L.esri.featureLayer({
+          url: "https://services3.arcgis.com/GVgbJbqm8hXASVYi/arcgis/rest/services/Trailheads_Styled/FeatureServer/0"
+        });
+
+        trailheads.addTo(map);
+
+        trailheads.bindPopup(function (layer) {
+            console.log(layer);
+            var myl = L.DomUtil.get('details');
+            myl.innerHTML = layer.feature.properties.TRL_NAME;
+           
+            return myl;
+        });
+
+        //<b style='color:red'>{TRL_NAME}</b><br>{PARK_NAME}</br>
+
+
+        map.on('click', function (e) {
+            L.marker([e.latlng.lat, e.latlng.lng], {title: 'ss', riseOnHover:true, draggable: true}).on('move', function(ev){
+                console.log(ev);
+            }).addTo(map);
+        })
+    </script>
+</body>
+</html>
